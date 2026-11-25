@@ -42,6 +42,21 @@ def wrap(draw, text, fnt, max_width):
     return lines
 
 
+def fit_headline(draw, text, max_width, max_lines=2, start=27, floor=20):
+    """Largest bold font whose wrapping of text fits max_lines lines.
+
+    Long headlines shrink instead of spilling past their card; short
+    ones keep the full start size.
+    """
+    size = start
+    while size > floor:
+        lines = wrap(draw, text, font(size, True), max_width)
+        if len(lines) <= max_lines:
+            return size, lines
+        size -= 1
+    return floor, wrap(draw, text, font(floor, True), max_width)
+
+
 STORIES = [
     ("MIDDLE EAST", (176, 42, 42),
      "Tankers hit mines in the Strait of Hormuz",
@@ -96,13 +111,16 @@ def main():
         d.rounded_rectangle([x, y, x + cw, y + 44], radius=14, fill=accent)
         d.rectangle([x, y + 22, x + cw, y + 44], fill=accent)
         d.text((x + 18, y + 10), label, font=font(22, True), fill=(255, 255, 255))
+        # Accent stripe down the card's left edge, in the story's colour
+        d.rounded_rectangle([x + 10, y + 58, x + 16, y + ch - 14], radius=3, fill=accent)
         ty = y + 58
-        for line in wrap(d, head, font(27, True), cw - 36):
-            d.text((x + 18, ty), line, font=font(27, True), fill=(24, 28, 36))
-            ty += 33
+        hsize, hlines = fit_headline(d, head, cw - 36)
+        for line in hlines:
+            d.text((x + 26, ty), line, font=font(hsize, True), fill=(24, 28, 36))
+            ty += hsize + 6
         ty += 6
-        for line in wrap(d, body, font(21), cw - 36):
-            d.text((x + 18, ty), line, font=font(21), fill=(74, 80, 92))
+        for line in wrap(d, body, font(21), cw - 44):
+            d.text((x + 26, ty), line, font=font(21), fill=(74, 80, 92))
             ty += 27
 
     # Footer
